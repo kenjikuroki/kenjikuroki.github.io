@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>アプリを開く | TrainingRecord</title>
+  <meta name="description" content="インスタから開く用 | うまく開かない場合は下のボタンをタップしてください。">
+  <!-- OG: 動的切替はできないが、日本語を既定にし英語を代替として宣言 -->
+  <meta property="og:title" content="TrainingRecord を開く" />
+  <meta property="og:description" content="インスタから開く用ランディング" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kenjikuroki.github.io/go/ig/" />
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:locale:alternate" content="en_US">
+  <link rel="alternate" hreflang="ja" href="https://kenjikuroki.github.io/go/ig/">
+  <link rel="alternate" hreflang="en" href="https://kenjikuroki.github.io/go/ig/?lang=en">
+
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#111; color:#fff; }
+    .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .card { width:100%; max-width:520px; background:#1b1b1b; border-radius:20px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.35);}
+    h1 { font-size:22px; margin:0 0 8px;}
+    p { opacity:.9; line-height:1.6; }
+    .btn { display:block; width:100%; text-align:center; padding:14px 18px; border-radius:12px; border:0; font-weight:700; font-size:16px; cursor:pointer; }
+    .btn-primary { background:#4ade80; color:#111; }
+    .btn-ghost { background:transparent; color:#ddd; margin-top:10px; }
+    .hint { font-size:13px; opacity:.7; margin-top:10px; }
+    .lang { text-align:center; margin-top:14px; font-size:13px; opacity:.8; }
+    .lang a { color:#9ae6b4; text-decoration:underline; }
+  </style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <h1 id="h1">TrainingRecord を開いています…</h1>
+  <p id="p1">自動で開かない場合は、下のボタンを押してください。</p>
+  <button id="open" class="btn btn-primary">アプリで開く</button>
+  <button id="store" class="btn btn-ghost">インストール/ストアを開く</button>
+  <div id="hint" class="hint">※ Safari/Chrome で開くと自動で起動しやすいです。</div>
+  <div id="lang" class="lang"></div>
+</div></div>
+
+<script>
+  // ========= 設定 =========
+  const DEFAULT_SRC = 'ad'; // このページの用途: ig / tt / ad
+  const params = new URLSearchParams(location.search);
+  const src = params.get('src') || DEFAULT_SRC;
+  const forceLang = (params.get('lang') || '').toLowerCase(); // 'en' or 'ja'
+
+  // ストアURL（実アプリのURLに差し替えてね）
+  const IOS_STORE_URL = 'https://apps.apple.com/app/idXXXXXXXXX';
+  const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.example.ttrainingrecord';
+  const WEB_FALLBACK = 'https://kenjikuroki.github.io/';
+
+  // カスタムスキーム（アプリ直起動）
+  const APP_SCHEME = 'ttrainingrecord://record?src=' + encodeURIComponent(src);
+
+  // ========= 言語辞書 =========
+  const i18n = {
+    ja: {
+      title: 'アプリを開く | TrainingRecord',
+      desc: 'インスタから開く用 | うまく開かない場合は下のボタンをタップしてください。',
+      h1: 'TrainingRecord を開いています…',
+      p1: '自動で開かない場合は、下のボタンを押してください。',
+      open: 'アプリで開く',
+      store: 'インストール/ストアを開く',
+      hint: '※ Safari/Chrome で開くと自動で起動しやすいです。',
+      switch: 'English? <a href="?lang=en">Switch to English</a>'
+    },
+    en: {
+      title: 'Open the App | TrainingRecord',
+      desc: 'From Instagram | If it doesn’t open automatically, tap the button below.',
+      h1: 'Opening TrainingRecord…',
+      p1: 'If it doesn’t open automatically, tap the button below.',
+      open: 'Open the app',
+      store: 'Install / Open store',
+      hint: 'Tip: Opening in Safari/Chrome often launches the app automatically.',
+      switch: '日本語ですか？ <a href="?lang=ja">日本語に切り替え</a>'
+    }
+  };
+
+  // 使用言語を決定（?lang=優先 → ブラウザ言語）
+  function detectLang() {
+    if (forceLang === 'ja' || forceLang === 'en') return forceLang;
+    const n = (navigator.language || '').toLowerCase();
+    return n.startsWith('ja') ? 'ja' : 'en';
+  }
+
+  function applyLang(lang) {
+    const t = i18n[lang] || i18n.en;
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.querySelector('meta[name="description"]').setAttribute('content', t.desc);
+    document.getElementById('h1').textContent = t.h1;
+    document.getElementById('p1').textContent = t.p1;
+    document.getElementById('open').textContent = t.open;
+    document.getElementById('store').textContent = t.store;
+    document.getElementById('hint').textContent = t.hint;
+    document.getElementById('lang').innerHTML = t.switch;
+  }
+
+  // ========= 端末判定 =========
+  const ua = navigator.userAgent.toLowerCase();
+  const isiOS = /iphone|ipad|ipod/.test(ua);
+  const isAndroid = /android/.test(ua);
+
+  function openApp() { location.href = APP_SCHEME; }
+  function openStore() {
+    if (isiOS) location.href = IOS_STORE_URL;
+    else if (isAndroid) location.href = ANDROID_STORE_URL;
+    else location.href = WEB_FALLBACK;
+  }
+
+  // ボタン
+  document.getElementById('open').addEventListener('click', openApp);
+  document.getElementById('store').addEventListener('click', openStore);
+
+  // ========= 自動起動試行 & フォールバック =========
+  let fallbackTimer = null;
+  function tryOpenThenFallback() {
+    // ページがバックグラウンド（=アプリ起動成功の可能性）になったらフォールバック中止
+    const onHidden = () => { if (document.hidden && fallbackTimer) { clearTimeout(fallbackTimer); } };
+    document.addEventListener('visibilitychange', onHidden, { once: true });
+
+    // 1. 起動トライ
+    try { openApp(); } catch (_) {}
+
+    // 2. 1.2秒後にストアへ（起動成功時は上のvisibilitychangeで中止）
+    fallbackTimer = setTimeout(openStore, 1200);
+  }
+
+  // 初期化：言語適用→自動試行
+  applyLang(detectLang());
+  tryOpenThenFallback();
+</script>
+</body>
+</html>
